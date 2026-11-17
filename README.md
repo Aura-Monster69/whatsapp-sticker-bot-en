@@ -29,3 +29,19 @@ npm start
 ```bash
 npm test
 ```
+
+## ¿Dónde montarlo gratis?
+
+El bot consume pocos recursos (~250–400 MB de RAM, 1 vCPU), **no necesita puertos abiertos ni IP pública**, y solo requiere **disco persistente** para guardar `auth_info/` sin perder la sesión de WhatsApp:
+
+- **En tu casa ($0, sin tarjeta):**
+  - **PC / Mac / laptop** que mantengas encendida (Windows, macOS o Linux).
+  - **Android viejo con Termux** (instalando `nodejs`, `ffmpeg` y `yt-dlp`, corriendo en `tmux`).
+  - **Raspberry Pi / Mini PC** conectada a tu Wi-Fi.
+- **En la nube gratis ($0/mes, requiere tarjeta para verificación):**
+  - **Oracle Cloud (OCI) Always Free:** VM `e2.1.micro` o ARM `A1.Flex` permanente.
+  - **Google Cloud (GCP) Free Tier:** 1 VM `e2-micro` gratis al mes (`us-west1`, `us-central1` o `us-east4`) con disco estándar de 30 GB (recomendable añadir 1–2 GB de swap).
+  - **AWS (`t2.micro`/`t3.micro`) o Azure (`B1s`):** 12 meses gratis en cuentas nuevas.
+  - **Estudiantes:** Con **GitHub Student Developer Pack** obtienes créditos en **DigitalOcean** ($200 USD) y **Azure** ($100 USD).
+- **Qué evitar:** Tiers gratuitos de plataformas serverless o que duermen por inactividad/borran el disco al reiniciar (como Vercel, Netlify o planes free sin volumen persistente de Render/Koyeb), ya que desconectan el WebSocket y borran `auth_info/`.
+
