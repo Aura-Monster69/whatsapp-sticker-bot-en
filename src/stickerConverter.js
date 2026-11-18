@@ -143,8 +143,6 @@ export async function convertToSticker(inputBuffer, options) {
           '-preset',
           'default',
           '-an',
-          '-vsync',
-          '0',
           '-q:v',
           String(pass.quality),
           outputPath,

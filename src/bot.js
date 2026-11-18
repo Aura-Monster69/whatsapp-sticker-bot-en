@@ -13,6 +13,11 @@ import { extractXStatusUrl, fetchMediaFromX } from './xExtractor.js';
 const logger = pino({ level: 'warn' });
 const groupSubjectCache = new Map();
 
+export const botState = {
+  status: 'starting',
+  qr: null,
+};
+
 /**
  * Unwrap nested ephemeral/view-once message wrappers from Baileys.
  * @param {import('@whiskeysockets/baileys').proto.IMessage | undefined} message
@@ -232,10 +237,13 @@ export async function startBot() {
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
+      botState.qr = qr;
+      botState.status = 'waiting_for_qr';
       console.log('\nEscanea este QR con WhatsApp (Dispositivos vinculados):');
       qrcode.generate(qr, { small: true });
     }
     if (connection === 'close') {
+      botState.status = 'disconnected';
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
       console.warn(
@@ -245,6 +253,8 @@ export async function startBot() {
         setTimeout(() => startBot(), 3000);
       }
     } else if (connection === 'open') {
+      botState.qr = null;
+      botState.status = 'connected';
       console.log('[StickerBot] Conectado a WhatsApp correctamente.');
       if (
         config.allowedGroupJids.length === 0 &&
