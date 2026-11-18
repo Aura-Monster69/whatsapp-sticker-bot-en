@@ -236,7 +236,7 @@ export async function startBot() {
 
   sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
       botState.qr = qr;
@@ -260,11 +260,7 @@ export async function startBot() {
       console.log('[StickerBot] Conectado a WhatsApp correctamente.');
 
       // Mark the bot presence as unavailable/offline so your account doesn't stay "Online" 24/7
-      try {
-        await sock.sendPresenceUpdate('unavailable');
-      } catch {
-        // Presence updates are non-critical
-      }
+      sock.sendPresenceUpdate('unavailable').catch(() => {});
 
       if (
         config.allowedGroupJids.length === 0 &&
