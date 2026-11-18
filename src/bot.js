@@ -158,6 +158,7 @@ async function handleMessage(sock, msg) {
           packName: config.packName,
           author: config.author,
           maxVideoSeconds: config.maxVideoSeconds,
+          videoSpeed: config.videoSpeed,
         });
         await sock.sendMessage(remoteJid, { sticker }, { quoted: msg });
       }
@@ -174,6 +175,7 @@ async function handleMessage(sock, msg) {
         packName: config.packName,
         author: config.author,
         maxVideoSeconds: config.maxVideoSeconds,
+        videoSpeed: config.videoSpeed,
       });
       await sock.sendMessage(remoteJid, { sticker }, { quoted: msg });
     }

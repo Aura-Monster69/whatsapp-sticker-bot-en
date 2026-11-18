@@ -19,6 +19,7 @@ export const config = {
   allowedGroupJids: parseCsvList(process.env.ALLOWED_GROUP_JIDS),
   allowedGroupNames: parseCsvList(process.env.ALLOWED_GROUP_NAMES),
   allowedUserJids: parseCsvList(process.env.ALLOWED_USER_JIDS),
-  maxVideoSeconds: Math.max(1, Number(process.env.MAX_VIDEO_SECONDS) || 8),
+  maxVideoSeconds: Math.max(1, Number(process.env.MAX_VIDEO_SECONDS) || 6),
+  videoSpeed: Math.max(0.5, Number(process.env.VIDEO_SPEED) || 1.0),
   ytdlpPath: process.env.YTDLP_PATH || 'yt-dlp',
 };

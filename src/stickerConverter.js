@@ -50,13 +50,40 @@ export async function attachExif(webpBuffer, packName, author) {
 }
 
 /**
+ * Probe media duration in seconds using ffprobe.
+ * @param {string} filePath
+ * @returns {Promise<number | null>}
+ */
+async function probeDuration(filePath) {
+  try {
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      filePath,
+    ]);
+    const dur = parseFloat(stdout.trim());
+    return Number.isFinite(dur) && dur > 0 ? dur : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Build the FFmpeg video/image filter that preserves aspect ratio with
- * 100% transparent borders inside a 512x512 canvas.
+ * 100% transparent borders inside a 512x512 canvas and optionally speeds up playback.
  * @param {number | null} fps
+ * @param {number | null} speedMultiplier
  * @returns {string}
  */
-function buildTransparentContainFilter(fps = null) {
+function buildTransparentContainFilter(fps = null, speedMultiplier = null) {
   const parts = [];
+  if (speedMultiplier && speedMultiplier > 1.01) {
+    parts.push(`setpts=PTS/${speedMultiplier.toFixed(3)}`);
+  }
   if (fps) {
     parts.push(`fps=${fps}`);
   }
@@ -79,6 +106,7 @@ function buildTransparentContainFilter(fps = null) {
  *   packName?: string,
  *   author?: string,
  *   maxVideoSeconds?: number,
+ *   videoSpeed?: number,
  * }} options
  * @returns {Promise<Buffer>}
  */
@@ -88,7 +116,8 @@ export async function convertToSticker(inputBuffer, options) {
     ext = isAnimated ? 'mp4' : 'png',
     packName = 'dcss-stickers',
     author = 'dcss',
-    maxVideoSeconds = 8,
+    maxVideoSeconds = 6,
+    videoSpeed = 1.0,
   } = options;
 
   const workDir = await mkdtemp(join(tmpdir(), 'wsb-conv-'));
@@ -122,20 +151,47 @@ export async function convertToSticker(inputBuffer, options) {
         if (webpBuffer.length <= STATIC_LIMIT_BYTES) break;
       }
     } else {
+      const rawDuration = await probeDuration(inputPath);
+      const targetDuration = Math.max(1, maxVideoSeconds);
+
+      // Dynamic Speed Scaling:
+      // - If video duration <= targetDuration: speed is 1.0 (normal speed, no modification).
+      // - If video duration > targetDuration: speed is increased proportionally (duration / targetDuration)
+      //   so the ENTIRE video is captured without truncating the ending.
+      const autoSpeed =
+        rawDuration && rawDuration > targetDuration
+          ? rawDuration / targetDuration
+          : 1.0;
+
+      const baseSpeed = Math.max(0.5, Number(videoSpeed) || 1.0);
+      const initialSpeed = Math.min(Math.max(autoSpeed, baseSpeed), 3.5);
+
+      const outputDuration = rawDuration
+        ? Math.min(rawDuration / initialSpeed, targetDuration)
+        : targetDuration;
+
+      // Compression passes: adjust FPS, quality, and add speedboost for complex/heavy videos
       const passes = [
-        { fps: 15, quality: 60, duration: maxVideoSeconds },
-        { fps: 12, quality: 40, duration: Math.min(maxVideoSeconds, 6) },
-        { fps: 10, quality: 25, duration: Math.min(maxVideoSeconds, 5) },
+        { fps: 14, quality: 55, speedBoost: 1.0 },
+        { fps: 11, quality: 38, speedBoost: 1.0 },
+        { fps: 9, quality: 25, speedBoost: 1.0 },
+        { fps: 8, quality: 20, speedBoost: 1.2 }, // extra boost for unusually large/heavy files
       ];
+
       for (const pass of passes) {
+        const passSpeed = Math.min(initialSpeed * pass.speedBoost, 4.0);
+        const passDuration = rawDuration
+          ? Math.min(rawDuration / passSpeed, targetDuration)
+          : outputDuration;
+
         await execFileAsync('ffmpeg', [
           '-y',
-          '-t',
-          String(pass.duration),
           '-i',
           inputPath,
+          '-t',
+          String(passDuration.toFixed(2)),
           '-vf',
-          buildTransparentContainFilter(pass.fps),
+          buildTransparentContainFilter(pass.fps, passSpeed),
           '-vcodec',
           'libwebp',
           '-loop',

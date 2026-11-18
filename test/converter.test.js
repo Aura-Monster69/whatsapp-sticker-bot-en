@@ -97,3 +97,41 @@ test('convertToSticker creates animated WebP under 500KB with EXIF', async () =>
     await rm(workDir, { recursive: true, force: true });
   }
 });
+
+test('convertToSticker auto-speeds up videos longer than maxVideoSeconds and fits <= 500KB', async () => {
+  const workDir = await mkdtemp(join(tmpdir(), 'wsb-test-vid-long-'));
+  try {
+    const sampleMp4 = join(workDir, 'long_clip.mp4');
+    await execFileAsync('ffmpeg', [
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'testsrc=duration=10:size=640x360:rate=20',
+      '-c:v',
+      'libx264',
+      '-pix_fmt',
+      'yuv420p',
+      sampleMp4,
+    ]);
+    const inputBuf = await readFile(sampleMp4);
+    const stickerBuf = await convertToSticker(inputBuf, {
+      isAnimated: true,
+      ext: 'mp4',
+      packName: 'dcss-stickers',
+      author: 'dcss',
+      maxVideoSeconds: 6,
+      videoSpeed: 1.25,
+    });
+
+    assert.ok(stickerBuf.length > 0 && stickerBuf.length <= 500 * 1024);
+
+    const img = new webp.Image();
+    await img.load(stickerBuf);
+    assert.equal(img.width, 512);
+    assert.equal(img.height, 512);
+    assert.ok(img.hasAnim);
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+});
