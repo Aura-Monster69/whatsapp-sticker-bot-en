@@ -258,6 +258,14 @@ export async function startBot() {
       botState.qr = null;
       botState.status = 'connected';
       console.log('[StickerBot] Conectado a WhatsApp correctamente.');
+
+      // Mark the bot presence as unavailable/offline so your account doesn't stay "Online" 24/7
+      try {
+        await sock.sendPresenceUpdate('unavailable');
+      } catch {
+        // Presence updates are non-critical
+      }
+
       if (
         config.allowedGroupJids.length === 0 &&
         config.allowedGroupNames.length === 0
