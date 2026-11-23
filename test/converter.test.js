@@ -12,10 +12,10 @@ import { extractXStatusUrl } from '../src/xExtractor.js';
 const execFileAsync = promisify(execFile);
 
 test('extractXStatusUrl parses x.com and twitter.com status links', () => {
-  const x = extractXStatusUrl('Mira esto https://x.com/usuario_1/status/1234567890?s=20');
+  const x = extractXStatusUrl('Check this out https://x.com/user_1/status/1234567890?s=20');
   assert.deepEqual(x, {
-    url: 'https://x.com/usuario_1/status/1234567890',
-    user: 'usuario_1',
+    url: 'https://x.com/user_1/status/1234567890',
+    user: 'user_1',
     statusId: '1234567890',
   });
 

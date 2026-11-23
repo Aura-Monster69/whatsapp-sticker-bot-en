@@ -27,14 +27,22 @@ const server = http.createServer((req, res) => {
         : botState.qr
           ? `<h2>Scan this QR code with WhatsApp:</h2>
              <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(botState.qr)}" alt="WhatsApp QR Code" style="margin: 20px auto; display: block; border: 1px solid #ddd; padding: 12px; border-radius: 8px; background: #fff;" />
-             <p style="color: #64748b; font-size: 14px;">Open WhatsApp &rarr; Linked Devices &rarr; Link a Device. Refresh if QR code expires.</p>`
-          : '<h2>Starting up... please refresh this page in a few seconds.</h2>';
+             <p style="color: #64748b; font-size: 14px;">Open WhatsApp &rarr; Linked Devices &rarr; Link a Device. This page refreshes automatically.</p>`
+          : botState.status === 'disconnected'
+            ? '<h2>Disconnected</h2><p>The stored session was invalid. A new QR code will appear here automatically in a few seconds.</p>'
+            : '<h2>Starting up...</h2><p>The QR code will appear here automatically in a few seconds.</p>';
+
+    const refreshTag =
+      botState.status === 'connected'
+        ? ''
+        : '<meta http-equiv="refresh" content="5">';
 
     res.end(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${refreshTag}
   <title>WhatsApp Sticker Bot</title>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 40px 20px; background: #f8fafc; color: #1e293b; }

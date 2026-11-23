@@ -35,7 +35,7 @@ async function downloadBuffer(url) {
     headers: { 'User-Agent': 'whatsapp-sticker-bot/1.0' },
   });
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status} al descargar ${url}`);
+    throw new Error(`HTTP ${res.status} downloading ${url}`);
   }
   const arrayBuf = await res.arrayBuffer();
   return Buffer.from(arrayBuf);
@@ -79,7 +79,7 @@ async function downloadWithYtDlp(url, ytdlpPath) {
 export async function fetchMediaFromX(textOrUrl, options = {}) {
   const parsed = extractXStatusUrl(textOrUrl);
   if (!parsed) {
-    throw new Error('No se encontró un enlace válido de X/Twitter.');
+    throw new Error('No valid X/Twitter link found.');
   }
 
   const ytdlpPath = options.ytdlpPath || 'yt-dlp';
